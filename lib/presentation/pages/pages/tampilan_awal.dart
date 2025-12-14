@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ta_pbo/constants/color_constant.dart';
-import 'package:ta_pbo/presentation/pages/pages/login.dart';
-import 'package:ta_pbo/presentation/widget/tombol.dart';
+import 'package:ta_pbo/constants/color_constant.dart'; //
+import 'package:ta_pbo/presentation/pages/pages/login.dart'; //
+import 'package:ta_pbo/presentation/widget/tombol.dart'; //
 
 class TampilanAwal extends StatelessWidget {
   const TampilanAwal({super.key});
@@ -15,45 +15,58 @@ class TampilanAwal extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            // Agar aman di layar kecil
             child: Padding(
               padding: const EdgeInsets.all(40),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo (Pastikan file assets/logo.png ada, atau ganti Icon sementara)
+                  // 1. Logo Icon: Diganti jadi Inventory/Box agar kesan manajemen stok dapat
                   Container(
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
                         color: ColorConstant.primary.withOpacity(0.1),
                         shape: BoxShape.circle),
-                    // Jika belum ada gambar, pakai Icon ini:
-                    child: Icon(Icons.shopping_bag_outlined,
-                        size: 60, color: ColorConstant.primary),
-                    // child: Image.asset('assets/logo.png'),
+                    child: Icon(Icons.inventory_2_outlined, // Icon Stok Barang
+                        size: 60,
+                        color: ColorConstant.primary),
                   ),
 
                   const Gap(40),
 
+                  // 2. Judul Utama: SMART
                   Text(
-                    'Bukan yang Asli,\nTapi Pas di Hati!',
+                    'SMART',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      color: ColorConstant.textTitle,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
+                      color: ColorConstant
+                          .primary, // Pakai warna biru utama biar menonjol
+                      fontSize: 42, // Lebih besar
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.0, // Sedikit renggang biar elegan
+                    ),
+                  ),
+
+                  // 3. Kepanjangan: Supermarket Management...
+                  Text(
+                    'Supermarket Management\n& Reporting Tool',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: ColorConstant.textTitle, // Warna hitam/gelap
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                       height: 1.2,
                     ),
                   ),
 
                   const Gap(16),
 
+                  // 4. Deskripsi Bahasa Indonesia
                   Text(
-                    'Selamat Datang di Indomartku.\nBelanja hemat, dompet selamat.',
+                    'Sistem Informasi Manajemen Stok Barang\npada Supermarket',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                      color: ColorConstant.textBody,
+                      color: ColorConstant.textBody, // Warna abu-abu
                       fontSize: 14,
                       height: 1.5,
                     ),
@@ -61,8 +74,9 @@ class TampilanAwal extends StatelessWidget {
 
                   const Gap(50),
 
+                  // 5. Tombol Akses
                   Tombol(
-                    text: "Yuk Belanja",
+                    text: "Masuk Dashboard", // Bahasanya lebih ke admin
                     isFullwidth: true,
                     onPressed: () {
                       Navigator.of(context).pushReplacement(
