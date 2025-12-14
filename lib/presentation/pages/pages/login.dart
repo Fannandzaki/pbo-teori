@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ta_pbo/constants/color_constant.dart';
-import 'package:ta_pbo/presentation/pages/pages/discover_page.dart';
 import 'package:ta_pbo/presentation/widget/input_widget.dart';
 import 'package:ta_pbo/presentation/widget/tombol.dart';
+// Import halaman tujuan
+import 'package:ta_pbo/presentation/pages/pages/admin_home.dart';
+import 'package:ta_pbo/presentation/pages/pages/user_shop.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -17,9 +19,9 @@ class _LoginState extends State<Login> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
 
-  // DATA ANGGOTA & EMAILNYA
-  // Format: 'nama lengkap (huruf kecil)': 'emailnya'
-  final Map<String, String> dataAnggota = {
+  // 1. DATA ADMIN (Anggota Kelompok)
+  // Orang-orang ini akan masuk ke Admin Dashboard (Bisa Tambah/Edit Barang)
+  final Map<String, String> dataAdmin = {
     "fannan dzaki": "fannandzaki@indo.com",
     "ridho sinaga": "ridhosinaga@indo.com",
     "videa malika": "videamalika@indo.com",
@@ -27,40 +29,55 @@ class _LoginState extends State<Login> {
     "keisya zuleyka": "keisyazuleyka@indo.com",
   };
 
+  // 2. DATA USER BIASA (Pelanggan)
+  // Orang-orang ini akan masuk ke Halaman Belanja (Hanya bisa Beli)
+  final Map<String, String> dataUser = {
+    "user": "user@indo.com", // Akun tester untuk User
+    "budi santoso": "budi@gmail.com",
+  };
+
   void _handleLogin() {
-    // Ambil input dan ubah nama ke huruf kecil agar tidak sensitif huruf besar/kecil
+    // Normalisasi input (huruf kecil & hapus spasi ujung)
     String inputName = nameController.text.trim().toLowerCase();
     String inputEmail = emailController.text.trim();
 
-    // 1. Validasi Input Kosong
+    // Validasi Kosong
     if (inputName.isEmpty || inputEmail.isEmpty) {
       _showSnackBar("Nama dan Email tidak boleh kosong!", Colors.orange);
       return;
     }
 
-    // 2. Cek apakah Nama terdaftar di Map dataAnggota
-    if (!dataAnggota.containsKey(inputName)) {
-      _showSnackBar("Nama tidak terdaftar sebagai anggota!", Colors.redAccent);
-      return;
+    // --- LOGIKA CEK ADMIN ---
+    if (dataAdmin.containsKey(inputName)) {
+      // Jika nama ada di daftar Admin, cek emailnya
+      if (dataAdmin[inputName] == inputEmail) {
+        // Sukses -> Masuk Halaman Admin
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const AdminHomePage()));
+        return;
+      } else {
+        _showSnackBar(
+            "Email salah! Cek email untuk admin $inputName", Colors.redAccent);
+        return;
+      }
     }
 
-    // 3. Ambil email asli milik nama tersebut dari Map
-    String? correctEmail = dataAnggota[inputName];
-
-    // 4. Cek apakah email yang diketik cocok dengan email aslinya
-    if (inputEmail != correctEmail) {
-      _showSnackBar(
-          "Email salah! Email untuk $inputName seharusnya $correctEmail",
-          Colors.redAccent);
-      return;
+    // --- LOGIKA CEK USER BIASA ---
+    if (dataUser.containsKey(inputName)) {
+      // Jika nama ada di daftar User, cek emailnya
+      if (dataUser[inputName] == inputEmail) {
+        // Sukses -> Masuk Halaman Belanja
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const UserShopPage()));
+        return;
+      } else {
+        _showSnackBar("Email user salah!", Colors.redAccent);
+        return;
+      }
     }
 
-    // Login Berhasil
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const DiscoverPage(),
-      ),
-    );
+    // Jika tidak ada di kedua daftar
+    _showSnackBar("Akun tidak terdaftar di sistem!", Colors.red);
   }
 
   void _showSnackBar(String message, Color color) {
@@ -71,13 +88,6 @@ class _LoginState extends State<Login> {
         behavior: SnackBarBehavior.floating,
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    super.dispose();
   }
 
   @override
@@ -92,7 +102,7 @@ class _LoginState extends State<Login> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Siapa Namamu?',
+                  'SMART Login',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     color: ColorConstant.textTitle,
@@ -101,9 +111,10 @@ class _LoginState extends State<Login> {
                   ),
                 ),
                 const Gap(40),
+
+                // Form Container
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -127,13 +138,21 @@ class _LoginState extends State<Login> {
                       ),
                       const Gap(30),
                       Tombol(
-                        text: 'Login',
+                        text: 'Masuk',
                         isFullwidth: true,
                         onPressed: _handleLogin,
                       ),
                     ],
                   ),
                 ),
+
+                const Gap(20),
+                // Petunjuk Kecil (Opsional, biar gampang tes)
+                const Text(
+                  "Hint: Login nama anggota kelompok untuk mode Admin,\natau 'user' untuk mode Belanja.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                )
               ],
             ),
           ),

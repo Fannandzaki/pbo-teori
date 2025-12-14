@@ -17,20 +17,18 @@ class Tombol extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      // Bungkus dengan SizedBox agar isFullWidth lebih aman
       width: isFullwidth ? double.infinity : null,
       child: ElevatedButton(
-        // Ganti TextButton jadi ElevatedButton agar ada shadow dikit
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
             backgroundColor: ColorConstant.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
-            elevation: 0, // Flat style tapi berwarna
+            elevation: 0,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16))),
         child: Text(
-          text, // PERBAIKAN: Gunakan variabel 'text', bukan string hardcode
+          text,
           style: GoogleFonts.inter(
               fontWeight: FontWeight.w600, fontSize: 16, color: Colors.white),
         ),

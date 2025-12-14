@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ta_pbo/presentation/pages/pages/tampilan_awal.dart';
+import 'package:ta_pbo/presentation/pages/pages/login.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,9 +10,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TampilanAwal(),
+      title: 'SMART Supermarket',
+      theme: ThemeData(useMaterial3: true),
+      home: const Login(),
     );
   }
 }

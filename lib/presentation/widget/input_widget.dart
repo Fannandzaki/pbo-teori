@@ -5,8 +5,8 @@ import 'package:ta_pbo/constants/color_constant.dart';
 
 class InputWidget extends StatelessWidget {
   final String lable;
-  final TextEditingController? controller; // Tambahan untuk logika
-  final bool isPassword; // Tambahan opsi password
+  final TextEditingController? controller;
+  final bool isPassword;
 
   const InputWidget({
     super.key,
@@ -28,7 +28,7 @@ class InputWidget extends StatelessWidget {
         const Gap(8),
         Container(
           decoration: BoxDecoration(
-            color: ColorConstant.background, // Background abu muda
+            color: ColorConstant.background,
             borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
@@ -39,7 +39,7 @@ class InputWidget extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none, // Hilangkan garis border default
+                borderSide: BorderSide.none,
               ),
               hintText: 'Masukkan $lable',
               hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
@@ -47,7 +47,6 @@ class InputWidget extends StatelessWidget {
             style: GoogleFonts.inter(fontSize: 14),
           ),
         ),
-        const Gap(20),
       ],
     );
   }
