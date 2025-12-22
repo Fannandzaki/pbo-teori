@@ -1,12 +1,15 @@
 // lib/models/transaksi_model.dart
 import 'produk_model.dart';
 
+// --- DATABASE TRANSAKSI GLOBAL ---
+// Agar data transaksi tersimpan dan bisa dilihat Juragan
+List<Transaksi> riwayatTransaksi = [];
+
 class Transaksi {
   final String idTransaksi;
   final DateTime tgl;
   final double total;
-  // Ubah 'item' tunggal menjadi List of Map agar bisa menampung banyak barang & qty
-  final List<Map<String, dynamic>> items;
+  final List<Map<String, dynamic>> items; // [{'produk': Produk, 'qty': int}]
 
   Transaksi({
     required this.idTransaksi,
@@ -15,21 +18,15 @@ class Transaksi {
     required this.items,
   });
 
-  // Fungsi Cetak Struk
-  void cetakStruk() {
-    print("===============================");
-    print("STRUK BELANJA SUPERMARKET");
-    print("===============================");
-    print("ID Transaksi : $idTransaksi");
-    print("Tanggal      : ${tgl.toString().substring(0, 16)}");
-    print("-------------------------------");
-    for (var i in items) {
-      Produk p = i['produk'];
-      int qty = i['qty'];
-      print("${p.nama} (x$qty) - Rp ${p.harga * qty}");
+  // Hitung profit bersih dari transaksi ini
+  double hitungProfit() {
+    double profit = 0;
+    for (var item in items) {
+      Produk p = item['produk'];
+      int qty = item['qty'];
+      // Rumus: (Harga Jual - Harga Modal) * Jumlah
+      profit += (p.harga - p.hargaModal) * qty;
     }
-    print("-------------------------------");
-    print("TOTAL BAYAR  : Rp ${total.toInt()}");
-    print("===============================");
+    return profit;
   }
 }

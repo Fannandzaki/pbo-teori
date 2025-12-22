@@ -1,186 +1,278 @@
 import 'package:flutter/material.dart';
-import 'package:ta_pbo/constants/color_constant.dart';
-import 'package:ta_pbo/models/produk_model.dart'; // Pastikan import ini benar
-import 'package:ta_pbo/presentation/pages/pages/add_edit_produk.dart';
-import 'package:ta_pbo/presentation/pages/pages/login.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:gap/gap.dart';
+import '../../../models/produk_model.dart';
+import '../../../models/transaksi_model.dart';
+import 'add_edit_produk.dart';
+import 'login.dart';
+import 'kelola_kategori.dart';
 
 class AdminHomePage extends StatefulWidget {
-  const AdminHomePage({super.key});
+  final String role; // 'owner' atau 'gudang'
+  const AdminHomePage({super.key, required this.role});
+
   @override
   State<AdminHomePage> createState() => _AdminHomePageState();
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
-  // --- LOGIKA UTAMA ---
-  void _refresh() => setState(() {});
+  // Data Pegawai Dummy
+  List<Map<String, String>> daftarPegawai = [
+    {"nama": "Fannan", "posisi": "Kasir", "status": "Aktif"},
+    {"nama": "Admin Gudang", "posisi": "Logistik", "status": "Aktif"},
+  ];
 
-  void _deleteItem(int index) {
-    setState(() {
-      daftarProduk.removeAt(index);
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Barang dihapus')));
+  // Fungsi Hapus Produk (Hanya Gudang yang bersih-bersih data)
+  void deleteProduk(Produk produk) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Hapus Produk?"),
+        content: Text("Yakin hapus ${produk.nama}?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                daftarProduk.remove(produk);
+              });
+              Navigator.pop(ctx);
+            },
+            child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+          )
+        ],
+      ),
+    );
   }
 
-  // Fungsi Pop-up Dialog
-  Future<void> _openFormDialog({Produk? produk}) async {
-    await showDialog(
+  // Fungsi Pecat Pegawai (Hak Prerogatif Juragan)
+  void pecatPegawai(int index) {
+    showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          insetPadding: const EdgeInsets.all(20),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 700), // Sedikit lebih tinggi
-              child: AddEditProduk(produk: produk),
+      builder: (ctx) => AlertDialog(
+        title: const Text("PHK Pegawai"),
+        content: Text("Pecat ${daftarPegawai[index]['nama']}?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              setState(() {
+                daftarPegawai.removeAt(index);
+              });
+              Navigator.pop(ctx);
+            },
+            child:
+                const Text("Ya, Pecat", style: TextStyle(color: Colors.white)),
+          )
+        ],
+      ),
+    );
+  }
+
+  double hitungTotalAset() {
+    double total = 0;
+    for (var p in daftarProduk) {
+      total += (p.hargaModal * p.stok);
+    }
+    return total;
+  }
+
+  double hitungTotalProfit() {
+    double total = 0;
+    for (var trx in riwayatTransaksi) {
+      total += trx.hitungProfit();
+    }
+    return total;
+  }
+
+  void handleLogout() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const Login()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool isOwner = widget.role == 'owner';
+
+    return DefaultTabController(
+      // Juragan punya 3 Tab, Gudang cuma 1 tampilan
+      length: isOwner ? 3 : 1,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isOwner ? "Dashboard Juragan" : "Manajemen Gudang"),
+          backgroundColor: isOwner ? Colors.purple[100] : Colors.blue[100],
+          bottom: isOwner
+              ? const TabBar(
+                  tabs: [
+                    Tab(icon: Icon(Icons.analytics), text: "Laporan"),
+                    Tab(icon: Icon(Icons.people), text: "Pegawai"),
+                    Tab(
+                        icon: Icon(Icons.price_change),
+                        text: "Atur Harga"), // TAB KHUSUS JURAGAN
+                  ],
+                )
+              : null,
+          actions: [
+            if (!isOwner)
+              IconButton(
+                icon: const Icon(Icons.category),
+                tooltip: "Kelola Kategori",
+                onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (c) => const KelolaKategoriPage())),
+              ),
+            IconButton(icon: const Icon(Icons.logout), onPressed: handleLogout),
+          ],
+        ),
+
+        body: isOwner
+            ? TabBarView(
+                children: [
+                  _buildHalamanLaporan(), // Tab 1
+                  _buildHalamanPegawai(), // Tab 2
+                  _buildListBarang(isJuragan: true), // Tab 3 (Edit Harga)
+                ],
+              )
+            : _buildListBarang(
+                isJuragan: false), // Tampilan Gudang (Full Access)
+
+        floatingActionButton: isOwner
+            ? null
+            : FloatingActionButton(
+                child: const Icon(Icons.add),
+                onPressed: () async {
+                  await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (c) => const AddEditProdukPage()));
+                  setState(() {});
+                },
+              ),
+      ),
+    );
+  }
+
+  // Widget List Barang (Dipakai Gudang & Juragan)
+  Widget _buildListBarang({required bool isJuragan}) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: daftarProduk.length,
+      itemBuilder: (context, index) {
+        final p = daftarProduk[index];
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: Image.network(
+              p.urlGambar,
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.image, size: 50, color: Colors.grey),
+            ),
+            title: Text(p.nama,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Modal: Rp ${p.hargaModal} | Jual: Rp ${p.harga}",
+                    style: TextStyle(
+                        color: isJuragan ? Colors.purple : Colors.black87)),
+                Text("Stok: ${p.stok} unit"),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // TOMBOL EDIT (Juragan Edit Harga, Gudang Edit Stok)
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  tooltip: isJuragan ? "Atur Harga" : "Edit Barang",
+                  onPressed: () async {
+                    await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (c) => AddEditProdukPage(produk: p)));
+                    setState(() {});
+                  },
+                ),
+                // TOMBOL HAPUS (Hanya Gudang)
+                if (!isJuragan)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => deleteProduk(p),
+                  ),
+              ],
             ),
           ),
         );
       },
     );
-    _refresh();
   }
-  // --------------------
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('Admin Dashboard',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-        backgroundColor: ColorConstant.primary,
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20))),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
-            onPressed: () => Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const Login())),
-          )
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: ColorConstant.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Tambah", style: TextStyle(color: Colors.white)),
-        onPressed: () => _openFormDialog(),
-      ),
-      body: daftarProduk.isEmpty
-          ? Center(
-              child: Text("Belum ada produk",
-                  style: TextStyle(color: Colors.grey[600])))
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 80),
-              itemCount: daftarProduk.length,
-              itemBuilder: (context, index) {
-                // Ambil item sebagai Parent Class (Produk)
-                final Produk item = daftarProduk[index];
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Gambar
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: Image.network(
-                              item.urlGambar,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.image_not_supported,
-                                    color: Colors.grey),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Info Produk
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.nama,
-                                  style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                              const SizedBox(height: 4),
-                              
-                              // Menampilkan Harga (Format Rupiah sederhana)
-                              Text("Rp ${item.harga}", 
-                                  style: TextStyle(color: ColorConstant.primary, fontWeight: FontWeight.bold)),
-                              
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  // Badge Kategori
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(item.kategori, style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text('Stok: ${item.stok}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Tombol Aksi
-                        Column(
-                          children: [
-                            _actionButton(Icons.edit_rounded, Colors.blue,
-                                () => _openFormDialog(produk: item)),
-                            const SizedBox(height: 8),
-                            _actionButton(Icons.delete_outline_rounded, Colors.red,
-                                () => _deleteItem(index)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+  Widget _buildHalamanLaporan() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _infoCard("Total Aset (Modal)", hitungTotalAset(), Colors.blue),
+        const Gap(10),
+        _infoCard("Total Profit Bersih", hitungTotalProfit(), Colors.green),
+        const Gap(20),
+        const Text("Riwayat Penjualan",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const Divider(),
+        if (riwayatTransaksi.isEmpty)
+          const Center(child: Text("Belum ada data.")),
+        ...riwayatTransaksi.reversed.map((trx) => ListTile(
+              leading: const Icon(Icons.receipt, color: Colors.grey),
+              title: Text(trx.idTransaksi),
+              subtitle: Text("Untung: Rp ${trx.hitungProfit().toInt()}"),
+              trailing: Text("+ Rp ${trx.total.toInt()}",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.green)),
+            ))
+      ],
     );
   }
 
-  Widget _actionButton(IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, size: 20, color: color),
+  Widget _infoCard(String title, double val, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+        const Gap(5),
+        Text("Rp ${val.toInt()}",
+            style:
+                GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold)),
+      ]),
+    );
+  }
+
+  Widget _buildHalamanPegawai() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: daftarPegawai.length,
+      itemBuilder: (ctx, i) => Card(
+        child: ListTile(
+          leading: CircleAvatar(child: Text(daftarPegawai[i]['nama']![0])),
+          title: Text(daftarPegawai[i]['nama']!),
+          subtitle: Text(daftarPegawai[i]['posisi']!),
+          trailing: IconButton(
+            icon: const Icon(Icons.person_remove, color: Colors.red),
+            onPressed: () => pecatPegawai(i),
+          ),
+        ),
       ),
     );
   }

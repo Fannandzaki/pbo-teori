@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ta_pbo/constants/color_constant.dart';
+// Sesuaikan path ini jika folder constants kamu ada di tempat lain
+import '../../constants/color_constant.dart';
 
 class InputWidget extends StatelessWidget {
-  final String lable;
+  // 1. Ganti 'lable' jadi 'hint' agar sesuai dengan panggilan di halaman lain
+  final String hint;
   final TextEditingController? controller;
   final bool isPassword;
 
+  // 2. Tambahkan properti ini untuk dukungan input angka (Harga/Stok)
+  final bool isNumber;
+
   const InputWidget({
     super.key,
-    required this.lable,
+    required this.hint, // Wajib diisi
     this.controller,
     this.isPassword = false,
+    this.isNumber = false, // Default false (teks biasa)
   });
 
   @override
@@ -20,7 +26,8 @@ class InputWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(lable,
+        // Tampilkan Hint sebagai Label Judul
+        Text(hint,
             style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -34,6 +41,8 @@ class InputWidget extends StatelessWidget {
           child: TextField(
             controller: controller,
             obscureText: isPassword,
+            // 3. Logika Keyboard: Jika isNumber true, munculkan keyboard angka
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
             decoration: InputDecoration(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -41,7 +50,7 @@ class InputWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              hintText: 'Masukkan $lable',
+              hintText: 'Masukkan $hint',
               hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
             ),
             style: GoogleFonts.inter(fontSize: 14),
