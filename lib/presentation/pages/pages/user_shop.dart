@@ -1,3 +1,4 @@
+// lib/presentation/pages/pages/user_shop.dart
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import '../../../models/produk_model.dart';
@@ -15,24 +16,16 @@ class UserShopPage extends StatefulWidget {
 
 class _UserShopPageState extends State<UserShopPage> {
   Customer currentPelanggan = Customer(
-    id: "TRX",
-    username: "Umum",
-    password: "",
-    alamat: "-",
-    noHp: "-",
-    saldo: 0,
+    id: "TRX", username: "Umum", password: "", alamat: "-", noHp: "-", saldo: 0,
   );
 
   final TextEditingController _namaPembeliController = TextEditingController();
-  final TextEditingController _alamatPembeliController =
-      TextEditingController();
-
+  final TextEditingController _alamatPembeliController = TextEditingController();
   Map<Produk, int> keranjang = {};
 
   void tambahKeKeranjang(Produk produk) {
     if (produk.stok <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Stok Habis!"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Stok Habis!"), backgroundColor: Colors.red));
       return;
     }
     setState(() {
@@ -40,8 +33,7 @@ class _UserShopPageState extends State<UserShopPage> {
         if (keranjang[produk]! < produk.stok) {
           keranjang[produk] = keranjang[produk]! + 1;
         } else {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(const SnackBar(content: Text("Stok tidak cukup!")));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Stok tidak cukup!")));
         }
       } else {
         keranjang[produk] = 1;
@@ -69,79 +61,86 @@ class _UserShopPageState extends State<UserShopPage> {
     return total;
   }
 
+  // MODIFIKASI: Tambah Date Picker
   void showInputDataDialog() {
+    DateTime selectedDate = DateTime.now();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Data Pembeli"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-                controller: _namaPembeliController,
-                decoration: const InputDecoration(labelText: "Nama Pembeli")),
-            TextField(
-                controller: _alamatPembeliController,
-                decoration:
-                    const InputDecoration(labelText: "Alamat (Opsional)")),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal")),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                currentPelanggan = Customer(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Checkout & Tanggal"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: _namaPembeliController, decoration: const InputDecoration(labelText: "Nama Pembeli")),
+              TextField(controller: _alamatPembeliController, decoration: const InputDecoration(labelText: "Alamat (Opsional)")),
+              const Gap(10),
+              // Input Tanggal
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text("Tanggal Transaksi"),
+                subtitle: Text("${selectedDate.day}-${selectedDate.month}-${selectedDate.year}"),
+                trailing: const Icon(Icons.calendar_month, color: Colors.blue),
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => selectedDate = picked);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  currentPelanggan = Customer(
                     id: "TRX",
-                    username: _namaPembeliController.text.isEmpty
-                        ? "Umum"
-                        : _namaPembeliController.text,
+                    username: _namaPembeliController.text.isEmpty ? "Umum" : _namaPembeliController.text,
                     password: "",
                     alamat: _alamatPembeliController.text,
                     noHp: "-",
-                    saldo: 0);
-              });
-              Navigator.pop(context);
-              prosesPembayaran();
-            },
-            child: const Text("Bayar"),
-          ),
-        ],
+                    saldo: 0
+                  );
+                });
+                Navigator.pop(context);
+                prosesPembayaran(selectedDate); // Kirim tanggal
+              },
+              child: const Text("Bayar"),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void prosesPembayaran() {
+  void prosesPembayaran(DateTime tglTransaksi) {
     double totalBelanja = hitungTotalKeranjang();
     if (totalBelanja <= 0) return;
 
     List<Map<String, dynamic>> itemsBeli = [];
-
-    // LOGIKA KURANGI STOK
     keranjang.forEach((produk, qty) {
-      if (produk.stok >= qty) {
-        produk.stok -= qty; // Update stok asli
-      }
+      if (produk.stok >= qty) produk.stok -= qty;
       itemsBeli.add({'produk': produk, 'qty': qty});
     });
 
     Transaksi trx = Transaksi(
-      idTransaksi:
-          "TRX-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}",
-      tgl: DateTime.now(),
+      idTransaksi: "TRX-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}",
+      tgl: tglTransaksi, // Gunakan tanggal inputan
       total: totalBelanja,
       items: itemsBeli,
     );
 
-    // Simpan ke Riwayat Global agar Juragan bisa lihat
     riwayatTransaksi.add(trx);
-
     _showStrukDialog(trx);
-    setState(() {
-      keranjang.clear();
-    });
+    setState(() => keranjang.clear());
   }
 
   void _showStrukDialog(Transaksi trx) {
@@ -153,11 +152,11 @@ class _UserShopPageState extends State<UserShopPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("STRUK BELANJA",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text("STRUK BELANJA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const Divider(),
               Text("Kasir: ${widget.namaKasir}"),
               Text("Pembeli: ${currentPelanggan.username}"),
+              Text("Tgl: ${trx.tgl.day}/${trx.tgl.month}/${trx.tgl.year}"),
               const Divider(),
               ...trx.items.map((item) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,12 +166,9 @@ class _UserShopPageState extends State<UserShopPage> {
                     ],
                   )),
               const Divider(),
-              Text("TOTAL: Rp ${trx.total.toInt()}",
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text("TOTAL: Rp ${trx.total.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
               const Gap(20),
-              ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Tutup"))
+              ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text("Tutup"))
             ],
           ),
         ),
@@ -180,7 +176,6 @@ class _UserShopPageState extends State<UserShopPage> {
     );
   }
 
-  // ... (Sisa kode build dan modal keranjang sama seperti sebelumnya, sesuaikan pemanggilan fungsi)
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,49 +183,34 @@ class _UserShopPageState extends State<UserShopPage> {
           title: Text("Kasir: ${widget.namaKasir}"),
           backgroundColor: Colors.indigo,
           actions: [
-            IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () => Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (c) => const Login())))
+            IconButton(icon: const Icon(Icons.logout), onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const Login())))
           ]),
       floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.shopping_cart),
           onPressed: () {
-            // Tampilkan Modal Keranjang (Kode sama seperti sebelumnya)
             showModalBottomSheet(
                 context: context,
                 builder: (ctx) => Container(
                       padding: const EdgeInsets.all(16),
                       height: 400,
                       child: Column(children: [
-                        const Text("Keranjang",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Text("Keranjang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         Expanded(
                           child: ListView(
-                              children: keranjang.entries
-                                  .map((e) => ListTile(
+                              children: keranjang.entries.map((e) => ListTile(
                                         title: Text(e.key.nama),
                                         subtitle: Text("Qty: ${e.value}"),
                                         trailing: IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red),
+                                            icon: const Icon(Icons.delete, color: Colors.red),
                                             onPressed: () {
                                               kurangiDariKeranjang(e.key);
-                                              Navigator.pop(
-                                                  ctx); // Hack refresh
+                                              Navigator.pop(ctx);
                                               setState(() {});
                                             }),
-                                      ))
-                                  .toList()),
+                                      )).toList()),
                         ),
                         ElevatedButton(
-                            onPressed: keranjang.isEmpty
-                                ? null
-                                : () {
-                                    Navigator.pop(ctx);
-                                    showInputDataDialog();
-                                  },
+                            onPressed: keranjang.isEmpty ? null : () { Navigator.pop(ctx); showInputDataDialog(); },
                             child: const Text("Checkout"))
                       ]),
                     ));
@@ -242,9 +222,7 @@ class _UserShopPageState extends State<UserShopPage> {
           final p = daftarProduk[index];
           return Card(
             child: ListTile(
-              leading: Image.network(p.urlGambar,
-                  width: 50,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.image)),
+              leading: Image.network(p.urlGambar, width: 50, errorBuilder: (_, __, ___) => const Icon(Icons.image)),
               title: Text(p.nama),
               subtitle: Text("Stok: ${p.stok} | Rp ${p.harga}"),
               trailing: ElevatedButton(

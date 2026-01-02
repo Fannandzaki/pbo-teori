@@ -20,11 +20,11 @@ class Admin extends User {
   final String kodeAdmin;
 
   Admin({
-    required String id,
-    required String username,
-    required String password,
+    required super.id,
+    required super.username,
+    required super.password,
     required this.kodeAdmin,
-  }) : super(id: id, username: username, password: password, role: 'admin');
+  }) : super(role: 'admin');
 
   @override
   String getInfo() => "Admin: $username ($kodeAdmin)";
@@ -41,13 +41,13 @@ class Customer extends User {
   double saldo;
 
   Customer({
-    required String id,
-    required String username,
-    required String password,
+    required super.id,
+    required super.username,
+    required super.password,
     required this.alamat,
     required this.noHp,
     required this.saldo,
-  }) : super(id: id, username: username, password: password, role: 'customer');
+  }) : super(role: 'customer');
 
   @override
   String getInfo() => "Customer: $username | Saldo: Rp $saldo";

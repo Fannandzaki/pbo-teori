@@ -29,66 +29,45 @@ abstract class Produk {
 
 class Makanan extends Produk with HasExpiredDate {
   Makanan({
-    required String id,
-    required String nama,
-    required int harga,
-    required int hargaModal,
-    required int stok,
-    required String kategori,
-    required String urlGambar,
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
     required String expDate,
-  }) : super(
-            id: id,
-            nama: nama,
-            harga: harga,
-            hargaModal: hargaModal,
-            stok: stok,
-            kategori: kategori,
-            urlGambar: urlGambar) {
-    this.expiredDate = expDate;
+  }) {
+    expiredDate = expDate;
   }
 }
 
 class Minuman extends Produk {
   final String ukuran;
   Minuman({
-    required String id,
-    required String nama,
-    required int harga,
-    required int hargaModal,
-    required int stok,
-    required String kategori,
-    required String urlGambar,
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
     required this.ukuran,
-  }) : super(
-            id: id,
-            nama: nama,
-            harga: harga,
-            hargaModal: hargaModal,
-            stok: stok,
-            kategori: kategori,
-            urlGambar: urlGambar);
+  });
 }
 
 class Elektronik extends Produk {
   final String garansi;
   Elektronik({
-    required String id,
-    required String nama,
-    required int harga,
-    required int hargaModal,
-    required int stok,
-    required String kategori,
-    required String urlGambar,
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
     required this.garansi,
-  }) : super(
-            id: id,
-            nama: nama,
-            harga: harga,
-            hargaModal: hargaModal,
-            stok: stok,
-            kategori: kategori,
-            urlGambar: urlGambar);
+  });
 }
 
 // Data Dummy
