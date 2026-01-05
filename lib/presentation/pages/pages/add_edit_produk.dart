@@ -1,8 +1,11 @@
-// lib/presentation/pages/pages/add_edit_produk.dart
+import 'dart:io'; // Import dart:io
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:google_fonts/google_fonts.dart'; // Pastikan import ini ada untuk styling teks
+import 'package:image_picker/image_picker.dart'; // Import Image Picker
 import '../../../models/produk_model.dart';
 import '../../widget/input_widget.dart';
+import '../../widget/produk_image.dart'; // Import Widget Baru
 import '../../widget/tombol.dart';
 
 class AddEditProdukPage extends StatefulWidget {
@@ -20,10 +23,16 @@ class _AddEditProdukPageState extends State<AddEditProdukPage> {
   final TextEditingController _hargaController = TextEditingController();
   final TextEditingController _hargaModalController = TextEditingController();
   final TextEditingController _stokController = TextEditingController();
-  final TextEditingController _gambarController = TextEditingController();
+  final TextEditingController _gambarController = TextEditingController(); // Tetap simpan path sebagai String
+  
+  // Controller untuk field spesifik
   final TextEditingController _expDateController = TextEditingController();
   final TextEditingController _ukuranController = TextEditingController();
   final TextEditingController _garansiController = TextEditingController();
+  
+  final TextEditingController _cukaiController = TextEditingController();
+  final TextEditingController _jenisAtkController = TextEditingController();
+  final TextEditingController _bahanController = TextEditingController();
 
   String? selectedKategori;
 
@@ -38,14 +47,38 @@ class _AddEditProdukPageState extends State<AddEditProdukPage> {
       _gambarController.text = widget.produk!.urlGambar;
       selectedKategori = widget.produk!.kategori;
 
-      // Handle data khusus
       if (!daftarKategori.contains(widget.produk!.kategori)) {
         daftarKategori.add(widget.produk!.kategori);
       }
       
-      if (widget.produk is Makanan) _expDateController.text = (widget.produk as Makanan).expiredDate;
-      else if (widget.produk is Minuman) _ukuranController.text = (widget.produk as Minuman).ukuran;
-      else if (widget.produk is Elektronik) _garansiController.text = (widget.produk as Elektronik).garansi;
+      if (widget.produk is Makanan) {
+        _expDateController.text = (widget.produk as Makanan).expiredDate;
+      } else if (widget.produk is Minuman) {
+        _ukuranController.text = (widget.produk as Minuman).ukuran;
+      } else if (widget.produk is Elektronik) {
+        _garansiController.text = (widget.produk as Elektronik).garansi;
+      } else if (widget.produk is Rokok) {
+        _cukaiController.text = (widget.produk as Rokok).pitaCukai;
+      } else if (widget.produk is AlatTulis) {
+        _jenisAtkController.text = (widget.produk as AlatTulis).jenis;
+      } else if (widget.produk is PerlengkapanRumah) {
+        _bahanController.text = (widget.produk as PerlengkapanRumah).bahan;
+      }
+    }
+  }
+
+  // --- FUNGSI AMBIL GAMBAR ---
+  Future<void> _pickImage() async {
+    // Jika user gudang, cegah ganti gambar
+    if (widget.isGudang) return; 
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _gambarController.text = image.path; // Simpan path file lokal
+      });
     }
   }
 
@@ -70,6 +103,12 @@ class _AddEditProdukPageState extends State<AddEditProdukPage> {
       produkBaru = Minuman(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, ukuran: _ukuranController.text);
     } else if (selectedKategori == "Elektronik") {
       produkBaru = Elektronik(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, garansi: _garansiController.text);
+    } else if (selectedKategori == "Rokok") {
+      produkBaru = Rokok(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, pitaCukai: _cukaiController.text);
+    } else if (selectedKategori == "Alat Tulis") {
+      produkBaru = AlatTulis(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, jenis: _jenisAtkController.text);
+    } else if (selectedKategori == "Perlengkapan Rumah") {
+      produkBaru = PerlengkapanRumah(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, bahan: _bahanController.text);
     } else {
       produkBaru = Minuman(id: id, nama: nama, harga: harga, hargaModal: hargaModal, stok: stok, kategori: selectedKategori!, urlGambar: gambar, ukuran: "-");
     }
@@ -94,11 +133,10 @@ class _AddEditProdukPageState extends State<AddEditProdukPage> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Jika Gudang, nama produk dikunci
             InputWidget(hint: "Nama Produk", controller: _namaController, enabled: !widget.isGudang),
             const Gap(16),
             DropdownButtonFormField<String>(
-              value: selectedKategori,
+              initialValue: selectedKategori,
               decoration: const InputDecoration(labelText: "Kategori", border: OutlineInputBorder()),
               items: daftarKategori.map((k) => DropdownMenuItem(value: k, child: Text(k))).toList(),
               onChanged: widget.isGudang ? null : (v) => setState(() => selectedKategori = v),
@@ -112,16 +150,50 @@ class _AddEditProdukPageState extends State<AddEditProdukPage> {
               ],
             ),
             const Gap(16),
-            // Stok selalu bisa diedit (Gudang & Juragan)
             InputWidget(hint: "Stok Barang", controller: _stokController, isNumber: true),
             const Gap(16),
-            InputWidget(hint: "URL Gambar", controller: _gambarController, enabled: !widget.isGudang),
+
+            // --- BAGIAN INPUT GAMBAR ---
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text("Foto Produk", style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+            const Gap(8),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  // Menggunakan Widget ProductImage
+                  child: ProductImage(
+                    imagePath: _gambarController.text,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            if (!widget.isGudang)
+              TextButton.icon(
+                onPressed: _pickImage,
+                icon: const Icon(Icons.camera_alt, size: 16),
+                label: const Text("Ganti Foto"),
+              ),
+            // ---------------------------
             
-            // Kolom Khusus
             if (selectedKategori == "Makanan") ...[const Gap(16), InputWidget(hint: "Expired Date", controller: _expDateController, enabled: !widget.isGudang)],
             if (selectedKategori == "Minuman") ...[const Gap(16), InputWidget(hint: "Ukuran", controller: _ukuranController, enabled: !widget.isGudang)],
             if (selectedKategori == "Elektronik") ...[const Gap(16), InputWidget(hint: "Garansi", controller: _garansiController, enabled: !widget.isGudang)],
-            
+            if (selectedKategori == "Rokok") ...[const Gap(16), InputWidget(hint: "Tahun Cukai", controller: _cukaiController, enabled: !widget.isGudang)],
+            if (selectedKategori == "Alat Tulis") ...[const Gap(16), InputWidget(hint: "Jenis (Buku/Pena)", controller: _jenisAtkController, enabled: !widget.isGudang)],
+            if (selectedKategori == "Perlengkapan Rumah") ...[const Gap(16), InputWidget(hint: "Bahan Material", controller: _bahanController, enabled: !widget.isGudang)],
+
             const Gap(30),
             Tombol(text: "Simpan Data", isFullwidth: true, onPressed: saveProduk),
           ],

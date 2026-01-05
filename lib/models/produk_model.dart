@@ -1,6 +1,6 @@
 // lib/models/produk_model.dart
 
-List<String> daftarKategori = ["Makanan", "Minuman", "Elektronik"];
+List<String> daftarKategori = ["Makanan", "Minuman", "Elektronik", "Rokok", "Alat Tulis", "Perlengkapan Rumah"];
 
 mixin HasExpiredDate {
   late String expiredDate;
@@ -70,7 +70,51 @@ class Elektronik extends Produk {
   });
 }
 
-// Data Dummy
+// --- CLASS BARU DITAMBAHKAN ---
+
+class Rokok extends Produk {
+  final String pitaCukai; // Atribut khusus Rokok (misal: "2024" atau "Non-Cukai")
+  Rokok({
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
+    required this.pitaCukai,
+  });
+}
+
+class AlatTulis extends Produk {
+  final String jenis; // Atribut khusus ATK (misal: "Pulpen", "Buku", "Spidol")
+  AlatTulis({
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
+    required this.jenis,
+  });
+}
+
+class PerlengkapanRumah extends Produk {
+  final String bahan; // Atribut khusus Perlengkapan (misal: "Plastik", "Kayu")
+  PerlengkapanRumah({
+    required super.id,
+    required super.nama,
+    required super.harga,
+    required super.hargaModal,
+    required super.stok,
+    required super.kategori,
+    required super.urlGambar,
+    required this.bahan,
+  });
+}
+
+// Data Dummy Diperbarui
 List<Produk> daftarProduk = [
   Makanan(
       id: "MKN-001",
@@ -80,7 +124,7 @@ List<Produk> daftarProduk = [
       stok: 20,
       kategori: "Makanan",
       urlGambar:
-          "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Korb_mit_Br%C3%B6tchen.JPG/1200px-Korb_mit_Br%C3%B6tchen.JPG",
+          "../../assets/RotiTawar.jpg", 
       expDate: "2025-12-30"),
   Minuman(
       id: "MNM-001",
@@ -90,6 +134,33 @@ List<Produk> daftarProduk = [
       stok: 50,
       kategori: "Minuman",
       urlGambar:
-          "https://images.tokopedia.net/img/cache/700/VqbcmM/2022/6/15/8e025597-9092-4f33-9720-3949f69742a7.jpg",
+          "../../assets/GoldaCoffee.jpg", // Link Unsplash (Stabil)
       ukuran: "250ml"),
+  Rokok(
+      id: "RKK-001",
+      nama: "Surya 16",
+      harga: 32000,
+      hargaModal: 29000,
+      stok: 100,
+      kategori: "Rokok",
+      urlGambar: "../../assets/Surya16.jpg", // Ilustrasi Rokok
+      pitaCukai: "Cukai 2025"),
+  AlatTulis(
+      id: "ATK-001",
+      nama: "Buku Tulis",
+      harga: 5000,
+      hargaModal: 3500,
+      stok: 200,
+      kategori: "Alat Tulis",
+      urlGambar: "../../assets/BukuTulis.jpg", // Buku
+      jenis: "Buku Tulis"),
+  PerlengkapanRumah(
+      id: "PRT-001",
+      nama: "Sapu Lantai",
+      harga: 25000,
+      hargaModal: 18000,
+      stok: 15,
+      kategori: "Perlengkapan Rumah",
+      urlGambar: "../../assets/Sapu.jpg", // Alat Kebersihan
+      bahan: "Ijuk & Kayu"),
 ];
